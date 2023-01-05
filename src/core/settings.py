@@ -35,12 +35,21 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    # 3rd party apps
+    "debug_toolbar",
+    "corsheaders",
+
     # local apps
     "accounts",
     "blog",
 ]
 
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
+
 MIDDLEWARE = [
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -132,3 +141,8 @@ STATICFILES_DIR = [
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "accounts.User"
+
+DEBUG_TOOLBAR_CONFIG = {
+    # display django debug toolbar in docker
+    'SHOW_TOOLBAR_CALLBACK': lambda request: True
+}

@@ -8,10 +8,10 @@ RUN apt-get update && apt-get -y install libpq-dev gcc
 
 WORKDIR /app
 
-COPY requirements.txt /app/
+COPY ./requirements /app/requirements
 
 RUN pip3 install --upgrade pip
-RUN pip3 install -r requirements.txt
+RUN pip3 install -r requirements/production.txt
 
 COPY ./src /app
 

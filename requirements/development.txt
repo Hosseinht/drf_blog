@@ -1,0 +1,2 @@
+-r base.txt
+django_debug_toolbar==3.8.1

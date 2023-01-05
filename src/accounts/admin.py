@@ -1,26 +1,15 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import User,Profile
+from .models import Profile, User
 
 
 class AdminUser(UserAdmin):
     model = User
-    list_display = [
-        "id",
-        "email",
-        "is_staff",
-        "is_active",
-        "is_verified"
-    ]
+    list_display = ["id", "email", "full_name", "is_staff", "is_active", "is_verified"]
     ordering = ["email"]
     list_display_links = ["id", "email"]
-    list_filter = [
-        "email",
-        "is_staff",
-        "is_active",
-        "is_verified"
-    ]
+    list_filter = ["email", "is_staff", "is_active", "is_verified"]
     readonly_fields = ["last_login", "created_date", "modified_date"]
     fieldsets = (
         ("Password", {"fields": ("password",)}),
@@ -29,10 +18,11 @@ class AdminUser(UserAdmin):
             {
                 "fields": (
                     "email",
+                    "first_name",
+                    "last_name",
                 )
             },
         ),
-
         (
             "Permissions and Groups",
             {
@@ -58,13 +48,14 @@ class AdminUser(UserAdmin):
                 "classes": ("wide",),
                 "fields": (
                     "email",
+                    "first_name",
+                    "last_name",
                     "password1",
                     "password2",
                     "is_staff",
                     "is_active",
                     "is_superuser",
                     "is_verified",
-
                 ),
             },
         ),
