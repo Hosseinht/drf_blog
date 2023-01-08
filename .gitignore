@@ -6,6 +6,7 @@ __pycache__/
 # C extensions
 *.so
 pgdata
+drf.md
 # Distribution / packaging
 .Python
 build/

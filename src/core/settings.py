@@ -16,10 +16,10 @@ from decouple import config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
+# Quick-start development settings - unsuitable for production.txt
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# SECURITY WARNING: keep the secret key used in production.txt secret!
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', cast=bool)
 
@@ -36,8 +36,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     # 3rd party apps
-    "debug_toolbar",
     "corsheaders",
+    "debug_toolbar",
+    "django_filters",
+    "rest_framework",
 
     # local apps
     "accounts",
