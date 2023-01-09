@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "debug_toolbar",
     "django_filters",
     "rest_framework",
+    'rest_framework.authtoken',
     "drf_yasg",
 
     # local apps
@@ -148,4 +149,12 @@ AUTH_USER_MODEL = "accounts.User"
 DEBUG_TOOLBAR_CONFIG = {
     # display django debug toolbar in docker
     'SHOW_TOOLBAR_CALLBACK': lambda request: True
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    ]
 }
