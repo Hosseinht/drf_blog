@@ -1,7 +1,7 @@
-from rest_framework.filters import SearchFilter, OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import ModelViewSet
-from django_filters.rest_framework import DjangoFilterBackend
 
 from blog.models import Category, Post
 
@@ -16,9 +16,9 @@ class PostViewSet(ModelViewSet):
     lookup_field = "slug"
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['author', 'status', 'category']
-    search_fields = ['title', 'content']
-    ordering_fields= ['published_at']
+    filterset_fields = ["author", "status", "category"]
+    search_fields = ["title", "content"]
+    ordering_fields = ["published_at"]
     pagination_class = PostPagination
 
 
