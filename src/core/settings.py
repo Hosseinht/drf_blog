@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "debug_toolbar",
     "django_filters",
     "rest_framework",
+    "drf_yasg",
 
     # local apps
     "accounts",
