@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .serializers import CustomAuthTokenSerializer, RegisterUserSerializer
+from .serializers import CustomAuthTokenSerializer, RegisterUserSerializer, CustomTokenObtainPairSerializer
 
 
 class RegisterUserAPIView(generics.GenericAPIView):
@@ -27,7 +27,6 @@ class RegisterUserAPIView(generics.GenericAPIView):
 
 
 class ObtainAuthTokenView(ObtainAuthToken):
-
     serializer_class = CustomAuthTokenSerializer
 
     def post(self, request, *args, **kwargs):
@@ -47,3 +46,6 @@ class DestroyTokenView(APIView):
         request.user.auth_token.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+class CustomObtainTokenPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
