@@ -9,4 +9,6 @@ Pillow==9.4.0
 django-cors-headers==3.13.0
 drf-yasg==1.21.4
 djoser==2.1.0
+djangorestframework-simplejwt==5.2.2
+django-mail-template
 

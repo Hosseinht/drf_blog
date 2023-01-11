@@ -16,7 +16,7 @@ class PostViewSet(ModelViewSet):
     lookup_field = "slug"
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ["author", "status", "category"]
+    filterset_fields = ["author__email", "status", "category__name"]
     search_fields = ["title", "content"]
     ordering_fields = ["published_at"]
     pagination_class = PostPagination

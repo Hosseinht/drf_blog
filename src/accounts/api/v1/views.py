@@ -1,4 +1,7 @@
 from django.contrib.auth import get_user_model
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
 from rest_framework import generics, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -9,6 +12,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from accounts.models import Profile
+from accounts.utils import SendEmailThread
 
 from .serializers import (
     ChangePasswordSerializer,
@@ -102,3 +106,20 @@ class ProfileAPIView(generics.RetrieveUpdateAPIView):
         queryset = self.get_queryset()
         obj = get_object_or_404(queryset, user=self.request.user)
         return obj
+
+
+class TestEmail(generics.GenericAPIView):
+    def get(self, request, *args, **kwargs):
+
+        mail_subject = "email blog"
+        message = render_to_string(
+            "accounts/email/email_verification.html",
+        )
+        email = EmailMessage(
+            mail_subject, message, "mydjangoproject87@gmail.com", to=["email@gmail.com"]
+        )
+        email.content_subtype = "html"
+        # email.send()
+        SendEmailThread(email).start()
+
+        return Response("email sent")

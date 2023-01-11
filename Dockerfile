@@ -11,7 +11,7 @@ WORKDIR /app
 COPY ./requirements /app/requirements
 
 RUN pip3 install --upgrade pip
-RUN pip3 install -r requirements/production.txt
+RUN pip3 install -r requirements/development.txt
 
 COPY ./src /app
 

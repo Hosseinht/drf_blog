@@ -62,7 +62,7 @@ class CustomAuthTokenSerializer(serializers.Serializer):
             if not user.is_verified:
                 raise serializers.ValidationError({"details": "user is not verified"})
         else:
-            msg = 'Must include "username" and "password".'
+            msg = 'Must include "email" and "password".'
             raise serializers.ValidationError(msg, code="authorization")
 
         attrs["user"] = user
@@ -71,8 +71,14 @@ class CustomAuthTokenSerializer(serializers.Serializer):
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
+        # add email to the jwt token
         validated_data = super().validate(attrs)
         validated_data["email"] = self.user.email
+
+        # check if user is verified
+        if not self.user.is_verified:
+            raise serializers.ValidationError({"details": "user is not verified"})
+
         return validated_data
 
 
