@@ -1,4 +1,8 @@
-{% autoescape off %}
-<h1>This is an Email</h1>
+Hi {{user.email}}
 
-{% endautoescape %}
+Please click the link below to verify your account.
+
+http://{{domain}}/{% url 'accounts:api-v1:verify-user' token=token %}
+
+
+
