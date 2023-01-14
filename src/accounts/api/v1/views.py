@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import jwt
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -9,11 +11,12 @@ from jwt import DecodeError, ExpiredSignatureError
 from rest_framework import generics, mixins, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from accounts.models import Profile
@@ -88,26 +91,26 @@ class ChangePasswordView(generics.GenericAPIView):
     serializer_class = ChangePasswordSerializer
 
     def get_object(self, queryset=None):
-        obj = self.request.user
-        return obj
+        user = self.request.user
+        return user
 
     def put(self, request):
-        self.object = self.get_object()
+        user = self.get_object()
         serializer = self.get_serializer(data=request.data)
 
         serializer.is_valid(raise_exception=True)
         # Check old password
-        if not self.object.check_password(serializer.data.get("old_password")):
+        if not user.check_password(serializer.data.get("old_password")):
             return Response(
                 {"old_password": ["Wrong password."]},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         # set_password also hashes the password that the user will get
-        self.object.set_password(serializer.data.get("new_password"))
-        self.object.save()
+        user.set_password(serializer.data.get("new_password"))
+        user.save()
 
         return Response(
-            {"error": "Password changed successfully"}, status=status.HTTP_200_OK
+            {"detail": "Password changed successfully"}, status=status.HTTP_200_OK
         )
 
 
@@ -175,20 +178,21 @@ class PasswordResetEmailView(generics.GenericAPIView):
 class PasswordResetTokenValidateView(generics.GenericAPIView):
     serializer_class = PasswordResetTokenValidateSerializer
 
-    # serializer_class = SetNewPasswordSerializer
-
-    def put(self, request,token):
+    def put(self, request, token):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         password = serializer.validated_data['password']
         token = self.kwargs['token']
-        token_decode = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        # decode the incoming token
-        user_id = token_decode.get("user_id")
-        user = User.objects.get(id=user_id)
-        user.set_password(password)
-        user.save()
-        return Response({'detail': 'Password reset successfully'}, status=status.HTTP_200_OK)
+        try:
+            token_decode = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+            user_id = token_decode.get("user_id")
+            user = User.objects.get(id=user_id)
+            user.set_password(password)
+            return Response({'detail': 'Password reset successfully'}, status=status.HTTP_200_OK)
+        except ExpiredSignatureError:
+            return Response({'detail': 'Token is expired'}, status=status.HTTP_400_BAD_REQUEST)
+        except DecodeError:
+            return Response({'detail': 'Token is invalid'}, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, token, *args, **kwargs):
         try:
@@ -197,7 +201,7 @@ class PasswordResetTokenValidateView(generics.GenericAPIView):
             user_id = token_decode.get("user_id")
             user = User.objects.get(id=user_id)
             if not user:
-                return Response({'detail': 'bad request'},
+                return Response({'detail': 'Invalid request'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
         except ExpiredSignatureError:
@@ -207,4 +211,4 @@ class PasswordResetTokenValidateView(generics.GenericAPIView):
             # if token is not valid
             return Response({"detail": "Token is invalid"}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({'detail': 'Password reset successfully'}, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_200_OK)

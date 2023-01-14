@@ -160,19 +160,22 @@ class PasswordResetEmailSerializer(serializers.Serializer):
 
 
 class PasswordResetTokenValidateSerializer(serializers.Serializer):
-    token = serializers.CharField(max_length=600, read_only=True)
     password = serializers.CharField(
         min_length=6, max_length=68, write_only=True)
-    password1 = serializers.CharField(
+    confirm_password = serializers.CharField(
         min_length=6, max_length=68, write_only=True)
 
     class Meta:
-        fields = ['password', 'password1', 'token']
+        fields = ['password', 'confirm_password']
 
     def validate(self, attrs):
-        if attrs["password"] != attrs["password1"]:
+        if attrs["password"] != attrs["confirm_password"]:
             raise serializers.ValidationError(
                 {"details": "Passwords do not match"}
             )
+        try:
+            validate_password(attrs.get("password"))
+        except exceptions.ValidationError as e:
+            raise serializers.ValidationError({"password": list(e.messages)})
 
         return super().validate(attrs)
