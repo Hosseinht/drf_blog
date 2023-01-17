@@ -14,7 +14,7 @@ class PostViewSet(ModelViewSet):
     queryset = Post.objects.select_related("author", "category").all()
     serializer_class = PostSerializer
     lookup_field = "slug"
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["author__email", "status", "category__name"]
     search_fields = ["title", "content"]

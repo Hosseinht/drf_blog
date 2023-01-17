@@ -17,17 +17,21 @@ urlpatterns = [
         views.ResendActivationLinkView.as_view(),
         name="resend-activation-link",
     ),
-
     path(
         "change-password/",
         views.ChangePasswordView.as_view(),
         name="change-password",
     ),
-    path('reset-password-email/', views.PasswordResetEmailView.as_view(),
-         name="reset-password-email"),
-    path('reset-password-confirm/<token>/', views.PasswordResetTokenValidateView.as_view(),
-         name="reset-password-token"),
-
+    path(
+        "reset-password-email/",
+        views.PasswordResetEmailView.as_view(),
+        name="reset-password-email",
+    ),
+    path(
+        "reset-password-confirm/<uidb64>/<token>/",
+        views.PasswordResetTokenValidateView.as_view(),
+        name="reset-password-token",
+    ),
     path("token/login/", views.LoginView.as_view(), name="login-user"),
     path("token/logout/", views.LogoutView.as_view(), name="logout-user"),
     path("jwt/create/", views.CreateJwtTokenView.as_view(), name="jwt-create"),

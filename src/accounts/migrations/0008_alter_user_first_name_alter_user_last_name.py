@@ -13,13 +13,17 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="user",
             name="first_name",
-            field=models.CharField(blank=True, default="admin", max_length=250),
+            field=models.CharField(
+                blank=True, default="admin", max_length=250
+            ),
             preserve_default=False,
         ),
         migrations.AlterField(
             model_name="user",
             name="last_name",
-            field=models.CharField(blank=True, default="admin", max_length=250),
+            field=models.CharField(
+                blank=True, default="admin", max_length=250
+            ),
             preserve_default=False,
         ),
     ]

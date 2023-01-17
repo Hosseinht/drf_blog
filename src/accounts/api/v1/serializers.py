@@ -1,11 +1,8 @@
-import jwt
-from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core import exceptions
-from rest_framework import serializers, status
+from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from accounts.models import Profile
@@ -18,7 +15,9 @@ class RegisterUserSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if attrs.get("password") != attrs.get("confirm_password"):
-            raise serializers.ValidationError({"detail": "Passwords do not match."})
+            raise serializers.ValidationError(
+                {"detail": "Passwords do not match."}
+            )
 
         try:
             validate_password(attrs.get("password"))
@@ -32,7 +31,13 @@ class RegisterUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["email", "first_name", "last_name", "password", "confirm_password"]
+        fields = [
+            "email",
+            "first_name",
+            "last_name",
+            "password",
+            "confirm_password",
+        ]
 
 
 class LoginSerializer(serializers.Serializer):
@@ -63,7 +68,9 @@ class LoginSerializer(serializers.Serializer):
                 msg = "Unable to log in with provided credentials."
                 raise serializers.ValidationError(msg, code="authorization")
             if not user.is_verified:
-                raise serializers.ValidationError({"details": "user is not verified"})
+                raise serializers.ValidationError(
+                    {"details": "user is not verified"}
+                )
         else:
             msg = 'Must include "email" and "password".'
             raise serializers.ValidationError(msg, code="authorization")
@@ -80,7 +87,9 @@ class CreateJwtTokenSerializer(TokenObtainPairSerializer):
 
         # check if user is verified
         if not self.user.is_verified:
-            raise serializers.ValidationError({"details": "user is not verified"})
+            raise serializers.ValidationError(
+                {"details": "user is not verified"}
+            )
 
         return validated_data
 
@@ -92,12 +101,16 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs.get("new_password") != attrs.get("confirm_password"):
-            raise serializers.ValidationError({"detail": "Passwords do not match."})
+            raise serializers.ValidationError(
+                {"detail": "Passwords do not match."}
+            )
 
         try:
             validate_password(attrs.get("new_password"))
         except exceptions.ValidationError as e:
-            raise serializers.ValidationError({"new_password": list(e.messages)})
+            raise serializers.ValidationError(
+                {"new_password": list(e.messages)}
+            )
         return super().validate(attrs)
 
 
@@ -132,16 +145,15 @@ class ResendActivationLinkSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
     def validate(self, attrs):
-        email = attrs.get('email')
+        email = attrs.get("email")
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError({'detail': 'User does not exist.'})
+            raise serializers.ValidationError(
+                {"detail": "User does not exist."}
+            )
 
-        # if user.is_verified:
-        #     raise serializers.ValidationError({'detail': 'User is already verified.'})
-
-        attrs['user'] = user
+        attrs["user"] = user
         return super().validate(attrs)
 
 
@@ -152,21 +164,25 @@ class PasswordResetEmailSerializer(serializers.Serializer):
         try:
             user = User.objects.get(email=attrs["email"])
         except User.DoesNotExist:
-            raise ValidationError({'detail': 'There is no user with provided email'})
+            raise ValidationError(
+                {"detail": "There is no user with provided email"}
+            )
 
-        attrs['user'] = user
+        attrs["user"] = user
 
         return super().validate(attrs)
 
 
 class PasswordResetTokenValidateSerializer(serializers.Serializer):
     password = serializers.CharField(
-        min_length=6, max_length=68, write_only=True)
+        min_length=6, max_length=68, write_only=True
+    )
     confirm_password = serializers.CharField(
-        min_length=6, max_length=68, write_only=True)
+        min_length=6, max_length=68, write_only=True
+    )
 
     class Meta:
-        fields = ['password', 'confirm_password']
+        fields = ["password", "confirm_password"]
 
     def validate(self, attrs):
         if attrs["password"] != attrs["confirm_password"]:

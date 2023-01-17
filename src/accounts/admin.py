@@ -6,7 +6,14 @@ from .models import Profile, User
 
 class AdminUser(UserAdmin):
     model = User
-    list_display = ["id", "email", "full_name", "is_staff", "is_active", "is_verified"]
+    list_display = [
+        "id",
+        "email",
+        "full_name",
+        "is_staff",
+        "is_active",
+        "is_verified",
+    ]
     ordering = ["email"]
     list_display_links = ["id", "email"]
     list_filter = ["email", "is_staff", "is_active", "is_verified"]

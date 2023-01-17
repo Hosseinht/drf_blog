@@ -1,33 +1,35 @@
-from datetime import timedelta
-
 import jwt
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.sites.shortcuts import get_current_site
-from django.core.mail import EmailMessage
-from django.template.loader import render_to_string
-from drf_yasg.utils import swagger_auto_schema
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.encoding import smart_str
+from django.utils.http import urlsafe_base64_decode
 from jwt import DecodeError, ExpiredSignatureError
-from rest_framework import generics, mixins, status
+from rest_framework import generics, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from accounts.models import Profile
-from accounts.utils import (SendEmailThread, send_reset_password_email,
-                            send_verification_email)
+from accounts.utils import (
+    send_reset_password_email,
+    send_verification_email,
+)
 
-from .serializers import (ChangePasswordSerializer, CreateJwtTokenSerializer,
-                          LoginSerializer, PasswordResetEmailSerializer,
-                          PasswordResetTokenValidateSerializer,
-                          ProfileSerializer, RegisterUserSerializer,
-                          ResendActivationLinkSerializer)
+from .serializers import (
+    ChangePasswordSerializer,
+    CreateJwtTokenSerializer,
+    LoginSerializer,
+    PasswordResetEmailSerializer,
+    PasswordResetTokenValidateSerializer,
+    ProfileSerializer,
+    RegisterUserSerializer,
+    ResendActivationLinkSerializer,
+)
 
 User = get_user_model()
 
@@ -39,6 +41,7 @@ class RegisterUserView(generics.GenericAPIView):
 
     parameters: [email,first_name,last_name,password]
     """
+
     serializer_class = RegisterUserSerializer
 
     def post(self, request, *args, **kwargs):
@@ -56,7 +59,9 @@ class RegisterUserView(generics.GenericAPIView):
 
         mail_subject = "Please verify your email"
         email_template = "accounts/email/email_verification.html"
-        send_verification_email(self.request, user, mail_subject, email_template)
+        send_verification_email(
+            self.request, user, mail_subject, email_template
+        )
         return Response(data, status=status.HTTP_201_CREATED)
 
 
@@ -70,7 +75,9 @@ class LoginView(ObtainAuthToken):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
-        return Response({"token": token.key, "user_id": user.pk, "email": user.email})
+        return Response(
+            {"token": token.key, "user_id": user.pk, "email": user.email}
+        )
 
 
 class LogoutView(APIView):
@@ -110,7 +117,8 @@ class ChangePasswordView(generics.GenericAPIView):
         user.save()
 
         return Response(
-            {"detail": "Password changed successfully"}, status=status.HTTP_200_OK
+            {"detail": "Password changed successfully"},
+            status=status.HTTP_200_OK,
         )
 
 
@@ -127,23 +135,38 @@ class ProfileAPIView(generics.RetrieveUpdateAPIView):
 class UserActivationView(APIView):
     def get(self, request, token, *args, **kwargs):
         try:
-            token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+            token = jwt.decode(
+                token, settings.SECRET_KEY, algorithms=["HS256"]
+            )
             # decode the incoming token
             user_id = token.get("user_id")
             user = User.objects.get(id=user_id)
             if not user.is_verified:
                 user.is_verified = True
                 user.save()
-                return Response({'detail': "Thank you for your email confirmation. Now you can login your account."},
-                                status=status.HTTP_200_OK)
+                return Response(
+                    {
+                        "detail": "Thank you for your email confirmation. Now you can login your account."
+                    },
+                    status=status.HTTP_200_OK,
+                )
 
-            return Response({'detail': "Your account is already verified."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Your account is already verified."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         except ExpiredSignatureError:
             # if token expired
-            return Response({"detail": "Activation link is expired"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Activation link is expired"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         except DecodeError:
             # if token is not valid
-            return Response({"detail": "Token is invalid"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Token is invalid"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class ResendActivationLinkView(generics.GenericAPIView):
@@ -152,12 +175,17 @@ class ResendActivationLinkView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
+        user = serializer.validated_data["user"]
 
         mail_subject = "Please verify your email"
         email_template = "accounts/email/email_verification.html"
-        send_verification_email(self.request, user, mail_subject, email_template)
-        return Response({"detail": "Activation link resent successfully."}, status=status.HTTP_200_OK)
+        send_verification_email(
+            self.request, user, mail_subject, email_template
+        )
+        return Response(
+            {"detail": "Activation link resent successfully."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class PasswordResetEmailView(generics.GenericAPIView):
@@ -166,49 +194,56 @@ class PasswordResetEmailView(generics.GenericAPIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
+        user = serializer.validated_data["user"]
 
         mail_subject = "Password Reset"
         email_template = "accounts/email/reset_password_email.html"
-        send_verification_email(request, user, mail_subject, email_template)
+        send_reset_password_email(request, user, mail_subject, email_template)
 
-        return Response({'success': 'We have sent you a link to reset your password'}, status=status.HTTP_200_OK)
+        return Response(
+            {"success": "We have sent you a link to reset your password"},
+            status=status.HTTP_200_OK,
+        )
 
 
 class PasswordResetTokenValidateView(generics.GenericAPIView):
     serializer_class = PasswordResetTokenValidateSerializer
 
-    def put(self, request, token):
+    def put(self, request, uidb64, token):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        password = serializer.validated_data['password']
-        token = self.kwargs['token']
+        password = serializer.validated_data["password"]
+        uidb64 = self.kwargs["uidb64"]
+        token = self.kwargs["token"]
+
+        id = smart_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(id=id)
+        if not PasswordResetTokenGenerator().check_token(user, token):
+            return Response(
+                {"detail": "The reset link is invalid"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user.set_password(password)
+        user.save()
+        return Response(
+            {"detail": "You have successfully reset your password."},
+            status=status.HTTP_200_OK,
+        )
+
+    def get(self, request, uidb64, token):
+
         try:
-            token_decode = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-            user_id = token_decode.get("user_id")
-            user = User.objects.get(id=user_id)
-            user.set_password(password)
-            return Response({'detail': 'Password reset successfully'}, status=status.HTTP_200_OK)
-        except ExpiredSignatureError:
-            return Response({'detail': 'Token is expired'}, status=status.HTTP_400_BAD_REQUEST)
-        except DecodeError:
-            return Response({'detail': 'Token is invalid'}, status=status.HTTP_400_BAD_REQUEST)
+            id = smart_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(id=id)
+            if not PasswordResetTokenGenerator().check_token(user, token):
+                return Response(
+                    {"detail": "The reset link is invalid"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-    def get(self, request, token, *args, **kwargs):
-        try:
-            token_decode = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-            # decode the incoming token
-            user_id = token_decode.get("user_id")
-            user = User.objects.get(id=user_id)
-            if not user:
-                return Response({'detail': 'Invalid request'},
-                                status=status.HTTP_400_BAD_REQUEST)
-
-        except ExpiredSignatureError:
-            # if token expired
-            return Response({"detail": "Reset link is expired"}, status=status.HTTP_400_BAD_REQUEST)
-        except DecodeError:
-            # if token is not valid
-            return Response({"detail": "Token is invalid"}, status=status.HTTP_400_BAD_REQUEST)
-
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response(
+                {"detail": "XX Token is not valid, please request a new one"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         return Response(status=status.HTTP_200_OK)
