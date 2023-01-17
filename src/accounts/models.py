@@ -10,9 +10,7 @@ from django.dispatch import receiver
 
 
 class UserManager(BaseUserManager):
-    def create_user(
-        self, email, first_name, last_name, password, **extra_fields
-    ):
+    def create_user(self, email, first_name, last_name, password, **extra_fields):
         if not email:
             raise ValueError("User must have an email address")
 
@@ -30,9 +28,7 @@ class UserManager(BaseUserManager):
         user.save()
         return user
 
-    def create_superuser(
-        self, email, first_name, last_name, password, **extra_fields
-    ):
+    def create_superuser(self, email, first_name, last_name, password, **extra_fields):
 
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
@@ -42,15 +38,11 @@ class UserManager(BaseUserManager):
         if extra_fields.get("is_staff") is not True:
             raise ValueError("Superuser must be assigned to is_staff=True.")
         if extra_fields.get("is_superuser") is not True:
-            raise ValueError(
-                "Superuser must be assigned to is_superuser=True."
-            )
+            raise ValueError("Superuser must be assigned to is_superuser=True.")
 
         email = self.normalize_email(email)
 
-        user = self.create_user(
-            email, first_name, last_name, password, **extra_fields
-        )
+        user = self.create_user(email, first_name, last_name, password, **extra_fields)
         user.save()
         return user
 
@@ -90,9 +82,7 @@ class Profile(models.Model):
     modified_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return (
-            f"{self.user.email} - {self.user.first_name} {self.user.last_name}"
-        )
+        return f"{self.user.email} - {self.user.first_name} {self.user.last_name}"
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)

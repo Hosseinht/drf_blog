@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # 'django.contrib.sites',
 
     # 3rd party apps
     "corsheaders",
@@ -44,13 +45,13 @@ INSTALLED_APPS = [
     "drf_yasg",
     "rest_framework_simplejwt",
     'rest_framework_simplejwt.token_blacklist',
-    "djoser",
+    # "djoser",
 
     # local apps
     "accounts",
     "blog",
 ]
-
+# SITE_ID = 1
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
@@ -181,7 +182,7 @@ SIMPLE_JWT = {
 
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
-    'USER_ID_FIELD': 'id',
+
     'USER_ID_CLAIM': 'user_id',
     'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
 
@@ -202,3 +203,8 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'mydjangoproject87@gmail.com'
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+
+CELERY_BROKER_URL = "redis://redis:6379/1"
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'json'

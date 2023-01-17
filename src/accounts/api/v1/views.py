@@ -2,6 +2,7 @@ import jwt
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import smart_str
 from django.utils.http import urlsafe_base64_decode
 from jwt import DecodeError, ExpiredSignatureError
@@ -15,10 +16,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from accounts.models import Profile
-from accounts.utils import (
-    send_reset_password_email,
-    send_verification_email,
-)
+from accounts.tasks import send_reset_password_email_task, send_verification_email_task
 
 from .serializers import (
     ChangePasswordSerializer,
@@ -57,10 +55,13 @@ class RegisterUserView(generics.GenericAPIView):
         }
         user = get_object_or_404(User, email=email)
 
+        user_id = user.id
+        receiver = email
+        current_site = get_current_site(request).domain
         mail_subject = "Please verify your email"
         email_template = "accounts/email/email_verification.html"
-        send_verification_email(
-            self.request, user, mail_subject, email_template
+        send_verification_email_task.delay(
+            user_id, receiver, current_site, mail_subject, email_template
         )
         return Response(data, status=status.HTTP_201_CREATED)
 
@@ -75,9 +76,7 @@ class LoginView(ObtainAuthToken):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
-        return Response(
-            {"token": token.key, "user_id": user.pk, "email": user.email}
-        )
+        return Response({"token": token.key, "user_id": user.pk, "email": user.email})
 
 
 class LogoutView(APIView):
@@ -135,9 +134,7 @@ class ProfileAPIView(generics.RetrieveUpdateAPIView):
 class UserActivationView(APIView):
     def get(self, request, token, *args, **kwargs):
         try:
-            token = jwt.decode(
-                token, settings.SECRET_KEY, algorithms=["HS256"]
-            )
+            token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
             # decode the incoming token
             user_id = token.get("user_id")
             user = User.objects.get(id=user_id)
@@ -177,10 +174,13 @@ class ResendActivationLinkView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
 
+        user_id = user.id
+        receiver = user.email
+        current_site = get_current_site(request).domain
         mail_subject = "Please verify your email"
         email_template = "accounts/email/email_verification.html"
-        send_verification_email(
-            self.request, user, mail_subject, email_template
+        send_verification_email_task.delay(
+            user_id, receiver, current_site, mail_subject, email_template
         )
         return Response(
             {"detail": "Activation link resent successfully."},
@@ -196,9 +196,14 @@ class PasswordResetEmailView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
 
+        user_id = user.id
+        receiver = user.email
+        current_site = get_current_site(request).domain
         mail_subject = "Password Reset"
         email_template = "accounts/email/reset_password_email.html"
-        send_reset_password_email(request, user, mail_subject, email_template)
+        send_reset_password_email_task.delay(
+            user_id, receiver, current_site, mail_subject, email_template
+        )
 
         return Response(
             {"success": "We have sent you a link to reset your password"},

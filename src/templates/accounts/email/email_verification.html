@@ -2,7 +2,7 @@ Hi {{user.email}}
 
 Please click the link below to verify your account.
 
-http://{{domain}}/{% url 'accounts:api-v1:verify-user' token=token %}
+http://{{domain}}{% url 'accounts:api-v1:verify-user' token=token %}
 
 
 
