@@ -248,7 +248,7 @@ class PasswordResetTokenValidateView(generics.GenericAPIView):
 
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             return Response(
-                {"detail": "XX Token is not valid, please request a new one"},
+                {"detail": "Token is not valid, please request a new one"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(status=status.HTTP_200_OK)
