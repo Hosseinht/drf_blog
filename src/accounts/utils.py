@@ -10,7 +10,7 @@ User = get_user_model()
 
 
 def send_verification_email(
-        user_id, receiver, current_site, mail_subject, email_template
+    user_id, receiver, current_site, mail_subject, email_template
 ):
     user = User.objects.get(id=user_id)
     token = RefreshToken.for_user(user).access_token
@@ -31,7 +31,7 @@ def send_verification_email(
 
 
 def send_reset_password_email(
-        user_id, receiver, current_site, mail_subject, email_template
+    user_id, receiver, current_site, mail_subject, email_template
 ):
     user = User.objects.get(id=user_id)
     uidb64 = urlsafe_base64_encode(smart_bytes(user.pk))
