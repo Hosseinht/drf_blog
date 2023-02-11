@@ -5,10 +5,14 @@ djangorestframework==3.14.0
 isort==5.11.4
 python-decouple==3.6
 psycopg2==2.9.5
-Pillow==9.4.0
+Pillow
+celery
 django-cors-headers==3.13.0
 drf-yasg==1.21.4
-djoser==2.1.0
 djangorestframework-simplejwt==5.2.2
-django-mail-template
+flake8==6.0.0
+Faker
+redis
+django-celery-beat
+django-celery-results
 

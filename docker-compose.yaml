@@ -1,6 +1,12 @@
 version: "3.9"
 
 services:
+  redis:
+    image: redis:6.2.7
+    container_name: redis
+    command: redis-server --save 60 1 --loglevel warning
+    ports:
+      - "6379:6379"
   db:
     image: postgres:13.8
     container_name: postgresql
@@ -24,6 +30,37 @@ services:
       - ./.env
     depends_on:
       - db
+
+  celery:
+    restart: always
+    build:
+      context: .
+    command: celery -A core worker -l INFO
+    volumes:
+      - ./src:/app
+    container_name: celery
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
+      - db
+      - app
+
+  celery-beat:
+    restart: always
+    build:
+      context: .
+    command: celery -A core beat -l info
+    volumes:
+      - ./src:/app
+    container_name: celery-beat
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
+      - db
+      - app
+
 
 volumes:
   pgdata:
