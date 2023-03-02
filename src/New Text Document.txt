@@ -1,0 +1,22 @@
+this is my view:
+class PostViewSet(ModelViewSet):
+    queryset = get_posts()
+    serializer_class = PostSerializer
+    lookup_field = "slug"
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ["author__email", "status", "category__name"]
+    search_fields = ["title", "content"]
+    ordering_fields = ["published_at"]
+    pagination_class = PostPagination
+
+and this is create method in my serializer:
+  def create(self, validated_data):
+        validated_data["author"] = User.objects.get(
+            id=self.context.get("request").user.id
+        )
+        return super().create(validated_data)
+
+I want to put create functionality in services.py. how can i do that?
+
+

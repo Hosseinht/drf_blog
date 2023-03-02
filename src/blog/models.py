@@ -21,7 +21,7 @@ class Post(models.Model):
     )
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
     title = models.CharField(max_length=200)
-    slug = models.SlugField(blank=True)
+    slug = models.SlugField(blank=True, unique=True)
     content = models.TextField()
     image = models.ImageField(null=True, blank=True)
     status = models.BooleanField(default=False)

@@ -9,7 +9,6 @@ from accounts.models import Profile
 
 User = get_user_model()
 
-
 class RegisterUserSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(max_length=255, write_only=True)
 

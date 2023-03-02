@@ -37,7 +37,7 @@ class TestPostApi:
     def test_create_post_response_401_status(self, api_client):
         url = reverse("blog:api-v1:posts-list")
         data = {
-            "title": "test",
+            "title": "tests",
             "content": "description",
             "status": True,
             "published_date": datetime.now(),
@@ -50,7 +50,7 @@ class TestPostApi:
         url = reverse("blog:api-v1:posts-list")
         data = {
             "category": category.pk,
-            "title": "test",
+            "title": "tests",
             "content": "description",
             "status": True,
             "published_date": datetime.now(),
@@ -65,7 +65,7 @@ class TestPostApi:
             self, api_client, common_user
     ):
         url = reverse("blog:api-v1:posts-list")
-        data = {"title": "test", "content": "description"}
+        data = {"title": "tests", "content": "description"}
         user = common_user
 
         api_client.force_authenticate(user=user)
