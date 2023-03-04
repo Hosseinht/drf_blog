@@ -21,7 +21,8 @@ def get_posts():
 
 
 def get_post(slug):
-    return Post.objects.select_related("author", "category").filter(slug=slug)
+    return Post.objects.select_related("author", "category").get(slug=slug)
+
 
 # def get_absolute_url(self, obj):
 #     request = self.context.get("request")

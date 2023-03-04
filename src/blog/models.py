@@ -23,7 +23,7 @@ class Post(models.Model):
     title = models.CharField(max_length=200)
     slug = models.SlugField(blank=True, unique=True)
     content = models.TextField()
-    image = models.ImageField(null=True, blank=True)
+    image = models.ImageField(default="cover-photo-3.PNG")
     status = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

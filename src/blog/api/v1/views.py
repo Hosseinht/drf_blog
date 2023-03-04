@@ -1,29 +1,27 @@
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
-from django.shortcuts import get_list_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.generics import ListCreateAPIView
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ViewSet
 from django.contrib.auth import get_user_model
+
+from drf_yasg.utils import swagger_auto_schema
 
 from blog.models import Category, Post
 from blog.selectors import get_posts, get_post
+from blog.services import create_post, delete_post, update_post
 
 from .paginations import PostPagination
 from .permissions import IsOwnerOrReadOnly
 from .serializers import CategorySerializer, PostSerializer
-from ...services import create_post
 
 User = get_user_model()
 
 
-class PostViewSet(ModelViewSet):
-    # queryset = Post.objects.select_related("author", "category").all()
-    queryset = get_posts()
+class PostViewSet(ViewSet):
+    # queryset = get_posts()
     serializer_class = PostSerializer
     lookup_field = "slug"
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
@@ -33,16 +31,54 @@ class PostViewSet(ModelViewSet):
     ordering_fields = ["published_at"]
     pagination_class = PostPagination
 
-    # def get_queryset(self):
-    #
-    #     request = self.request
-    #     if self.action in ["update", "destroy", "retrieve"]:
-    #         slug = self.kwargs["slug"]
-    #
-    #         return get_post(slug)
-    #     else:
-    #
-    #         return get_posts(request)
+    def list(self, request):
+        queryset = get_posts()
+        serializer = PostSerializer(queryset, context={"request": request}, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # @swagger_auto_schema(request_body=PostSerializer, response=PostSerializer)
+    def partial_update(self, request, slug):
+        post = Post.objects.get(slug=slug)
+        serializer = self.serializer_class(
+            instance=post,
+            data=request.data,
+            context={"request": request},
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+
+        validated_data = serializer.validated_data
+        print(validated_data.keys())
+        author = self.request.user
+        try:
+            update_post(validated_data, author, slug)
+        except Post.DoesNotExist:
+            return Response(
+                {"detail": "Post does not exist"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        # serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, slug):
+
+        try:
+            post = get_post(slug)
+        except Post.DoesNotExist:
+            return Response(
+                {"detail": "Post does not exist"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        serializer = PostSerializer(post, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, slug):
+        try:
+            delete_post(slug)
+        except Post.DoesNotExist:
+            return Response(
+                {"detail": "Post does not exist"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def create(self, request, *args, **kwargs):
         serializer = PostSerializer(data=request.data)
