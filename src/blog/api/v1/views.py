@@ -1,6 +1,6 @@
 from django.db import IntegrityError
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status
+from rest_framework import status, pagination
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
@@ -26,15 +26,23 @@ class PostViewSet(ViewSet):
     lookup_field = "slug"
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ["author__email", "status", "category__name"]
-    search_fields = ["title", "content"]
+    filterset_fields = ["author__email", "category__name"]
     ordering_fields = ["published_at"]
     pagination_class = PostPagination
 
     def list(self, request):
-        queryset = get_posts()
-        serializer = PostSerializer(queryset, context={"request": request}, many=True)
-
+        request = self.request
+        queryset = get_posts(request)
+        paginator = PostPagination()
+        paginated_queryset = paginator.paginate_queryset(queryset, request)
+        if paginated_queryset is not None:
+            serializer = PostSerializer(
+                paginated_queryset, context={"request": request}, many=True
+            )
+            return paginator.get_paginated_response(serializer.data)
+        serializer = PostSerializer(
+            paginated_queryset, context={"request": request}, many=True
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     # @swagger_auto_schema(request_body=PostSerializer, response=PostSerializer)
@@ -49,7 +57,6 @@ class PostViewSet(ViewSet):
         serializer.is_valid(raise_exception=True)
 
         validated_data = serializer.validated_data
-        print(validated_data.keys())
         author = self.request.user
         try:
             update_post(validated_data, author, slug)
