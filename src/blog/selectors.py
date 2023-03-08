@@ -1,9 +1,11 @@
 from django.contrib.auth import get_user_model
-from django.db import models
 from django.contrib.postgres.search import SearchVector
-from django_filters.rest_framework import filters
+from django.db.models import QuerySet
+from django_filters.rest_framework import filters, FilterSet
+from django_filters.rest_framework import DjangoFilterBackend
 
 from blog.models import Post
+from blog.api.v1.filters import PostFilter
 
 User = get_user_model()
 
@@ -18,25 +20,11 @@ def get_slug():
         return post.slug
 
 
-def filter_queryset(queryset):
-    for backend in list(filters.DjangoFilterBackend):
-        queryset = backend().filter_queryset(queryset)
-    return queryset
-
-
-def get_posts(request):
+def get_posts(filters=None):
     queryset = Post.objects.select_related("author", "category").filter(status=True)
-    search_query = request.query_params.get("search", None)
+    filters = filters or {}
 
-    filter_qs = filter_queryset(queryset)
-
-    if search_query:
-        posts = Post.objects.annotate(search=SearchVector("title", "content")).filter(
-            search=search_query
-        )
-        return posts
-    else:
-        return queryset
+    return PostFilter(filters, queryset).qs
 
 
 def get_post(slug):
@@ -45,8 +33,3 @@ def get_post(slug):
         .filter(status=True)
         .get(slug=slug)
     )
-
-
-# def get_absolute_url(self, obj):
-#     request = self.context.get("request")
-#     return request.build_absolute_uri(obj.slug)
