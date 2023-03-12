@@ -1,8 +1,7 @@
 from django.db import IntegrityError
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, pagination, serializers
-from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework import status, serializers
+from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
 from django.contrib.auth import get_user_model
@@ -10,12 +9,11 @@ from rest_framework.pagination import PageNumberPagination
 
 from drf_yasg.utils import swagger_auto_schema
 
-from blog.models import Category, Post
+from blog.models import Category, Post, Like
 from blog.selectors import get_posts, get_post
 from blog.services import create_post, delete_post, update_post
 
 from .paginations import (
-    PostPagination,
     get_paginated_response,
     get_paginated_response_context,
 )
@@ -124,6 +122,21 @@ class PostViewSet(ViewSet):
             )
         serializer = PostSerializer(post, context={"request": request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class LikeViewSet(ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, post_slug):
+        print(post_slug)
+        like = Like.objects.filter(like_post__slug=post_slug, like_user=request.user)
+        post = Post.objects.get(slug=post_slug)
+        if like.exists():
+            like.delete()
+            return Response({"message": "Like deleted."})
+        else:
+            Like.objects.create(like_user=request.user, like_post=post)
+            return Response({"message": "Like created."})
 
 
 class CategoryViewSet(ModelViewSet):

@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.search import SearchVector
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Count
 from django_filters.rest_framework import filters, FilterSet
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -21,7 +21,11 @@ def get_slug():
 
 
 def get_posts(filters=None):
-    queryset = Post.objects.select_related("author", "category").filter(status=True)
+    queryset = (
+        Post.objects.select_related("author", "category")
+        .annotate(likes=Count("like__id"))
+        .filter(status=True)
+    )
     filters = filters or {}
 
     return PostFilter(filters, queryset).qs
@@ -30,6 +34,7 @@ def get_posts(filters=None):
 def get_post(slug):
     return (
         Post.objects.select_related("author", "category")
+        .annotate(likes=Count("like__id"))
         .filter(status=True)
         .get(slug=slug)
     )

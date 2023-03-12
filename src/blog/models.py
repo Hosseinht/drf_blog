@@ -33,4 +33,16 @@ class Post(models.Model):
         return f"{self.title}"
 
     def get_absolute_url(self):
-        return reverse("blog:blog-api-v1:posts-detail")
+        return reverse("blog:blog-api-v1:posts-detail", kwargs={"slug": self.slug})
+
+
+class Like(models.Model):
+    like_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    like_post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="like")
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        unique_together = ["like_user", "like_post"]
+
+    def __str__(self):
+        return f"{self.like_user} - {self.like_post}"

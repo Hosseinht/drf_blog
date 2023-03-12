@@ -16,6 +16,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
+    likes = serializers.IntegerField()
     absolute_url = serializers.SerializerMethodField(read_only=True)
 
     author = serializers.SlugRelatedField(slug_field="full_name", read_only=True)
@@ -31,6 +32,7 @@ class PostSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(obj.slug)
 
     def to_representation(self, instance):
+
         rep = super().to_representation(instance)
         request = self.context.get("request")
 
@@ -44,12 +46,6 @@ class PostSerializer(serializers.ModelSerializer):
 
         return rep
 
-    # def create(self, validated_data):
-    #     validated_data["author"] = User.objects.get(
-    #         id=self.context.get("request").user.id
-    #     )
-    #     return super().create(validated_data)
-
     class Meta:
         model = Post
         fields = [
@@ -61,6 +57,7 @@ class PostSerializer(serializers.ModelSerializer):
             "content",
             "status",
             "image",
+            "likes",
             "absolute_url",
             "created_at",
             "updated_at",
