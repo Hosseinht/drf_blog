@@ -1,6 +1,5 @@
 from django.db import IntegrityError
-from rest_framework import status, serializers
-from rest_framework.generics import get_object_or_404
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
@@ -18,7 +17,7 @@ from .paginations import (
     get_paginated_response_context,
 )
 from .permissions import IsOwnerOrReadOnly
-from .serializers import CategorySerializer, PostSerializer
+from .serializers import CategorySerializer, PostSerializer, FilterSerializer
 
 User = get_user_model()
 
@@ -29,20 +28,9 @@ class PostViewSet(ViewSet):
     lookup_field = "slug"
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
-    class FilterSerializer(serializers.Serializer):
-        """
-        These fields are used in the filters.py
-        """
-
-        title = serializers.CharField(required=False, max_length=100)
-        search = serializers.CharField(required=False, max_length=100)
-        author__in = serializers.CharField(required=False, max_length=100)
-        category__name = serializers.CharField(required=False, max_length=100)
-        created_at__range = serializers.CharField(required=False, max_length=100)
-
     def list(self, request):
         request = self.request
-        filter_serializer = self.FilterSerializer(data=request.query_params)
+        filter_serializer = FilterSerializer(data=request.query_params)
         filter_serializer.is_valid(raise_exception=True)
 
         try:
@@ -64,6 +52,7 @@ class PostViewSet(ViewSet):
     # @swagger_auto_schema(request_body=PostSerializer, response=PostSerializer)
     def partial_update(self, request, slug):
         post = Post.objects.get(slug=slug)
+        self.check_object_permissions(request, post)
         serializer = self.serializer_class(
             instance=post,
             data=request.data,
@@ -95,6 +84,7 @@ class PostViewSet(ViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, slug):
+        self.check_object_permissions(request, get_post(slug))
         try:
             delete_post(slug)
         except Post.DoesNotExist:
@@ -103,19 +93,25 @@ class PostViewSet(ViewSet):
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request):
         serializer = PostSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         validated_data = serializer.validated_data
 
         try:
-            post = create_post(validated_data, user=self.request.user)
+            post = create_post(
+                user=self.request.user,
+                category=validated_data.get("category"),
+                title=validated_data.get("title"),
+                content=validated_data.get("content"),
+                image=validated_data.get("image"),
+                status=validated_data.get("status"),
+                published_at=validated_data.get("published_at"),
+            )
 
         # except Exception as e:
-        #     return Response(
-        #         {"detail": f"{e}"}, status=status.HTTP_400_BAD_REQUEST
-        #     )
+        #     return Response({"detail": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
         except IntegrityError:
             return Response(
                 {"detail": "Slug already exists."}, status=status.HTTP_400_BAD_REQUEST

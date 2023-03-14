@@ -8,16 +8,20 @@ User = get_user_model()
 
 
 @transaction.atomic
-def create_post(validated_data, user):
-    # author = User.objects.get(id=user.id)
+def create_post(user, category, title, content, image, status, published_at):
     return Post.objects.create(
         author=user,
-        **validated_data,
+        category=category,
+        title=title,
+        slug=slugify(title),
+        content=content,
+        image=image,
+        status=status,
+        published_at=published_at,
     )
 
 
 def delete_post(slug):
-    # author = User.objects.get(id=user.id)
     return Post.objects.get(slug=slug).delete()
 
 
@@ -39,7 +43,9 @@ def update_post(validated_data, author, slug):
         post.category = validated_data["category"]
     if "title" in validated_data:
         post.title = validated_data["title"]
-        post.slug = slugify(post.title)
+
+    if "slug" in validated_data:
+        post.slug = validated_data["slug"]
     if "content" in validated_data:
         post.content = validated_data["content"]
     if "image" in validated_data:

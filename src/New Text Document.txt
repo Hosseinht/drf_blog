@@ -20,3 +20,25 @@ and this is create method in my serializer:
 I want to put create functionality in services.py. how can i do that?
 
 
+import factory
+import factory.fuzzy
+import datetime
+
+class PostFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Post
+
+    # Other fields for the Post model
+    title = factory.fuzzy.FuzzyText(length=100)
+    content = factory.fuzzy.FuzzyText(length=200)
+    status = "published"
+    category = factory.SubFactory(CategoryFactory)
+    author = factory.SubFactory(UserFactory)
+    slug = factory.LazyAttribute(lambda obj: slugify(obj.title))
+
+    published_at = factory.Faker(
+        "date_time_this_year",
+        before_now=True,
+        after_time=datetime.datetime(2023, 1, 1),
+        tzinfo=datetime.timezone.utc
+    ).strftime("%Y-%m-%d %H:%M:%S")

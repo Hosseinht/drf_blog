@@ -16,7 +16,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    likes = serializers.IntegerField()
+    likes = serializers.IntegerField(read_only=True)
     absolute_url = serializers.SerializerMethodField(read_only=True)
 
     author = serializers.SlugRelatedField(slug_field="full_name", read_only=True)
@@ -63,4 +63,16 @@ class PostSerializer(serializers.ModelSerializer):
             "updated_at",
             "published_at",
         ]
-        read_only_fields = ["slug"]
+        # read_only_fields = ["slug"]
+
+
+class FilterSerializer(serializers.Serializer):
+    """
+    These fields are used in the filters.py
+    """
+
+    title = serializers.CharField(required=False, max_length=100)
+    search = serializers.CharField(required=False, max_length=100)
+    author__in = serializers.CharField(required=False, max_length=100)
+    category__name = serializers.CharField(required=False, max_length=100)
+    created_at__range = serializers.CharField(required=False, max_length=100)

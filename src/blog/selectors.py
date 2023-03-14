@@ -1,8 +1,6 @@
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.search import SearchVector
-from django.db.models import QuerySet, Count
-from django_filters.rest_framework import filters, FilterSet
-from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Count
+
 
 from blog.models import Post
 from blog.api.v1.filters import PostFilter
