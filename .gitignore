@@ -2,7 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+src/New Text Document.txt
 # C extensions
 *.so
 pgdata
