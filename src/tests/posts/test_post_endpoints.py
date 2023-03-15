@@ -1,14 +1,12 @@
 import json
 
 import pytest
-from django.contrib.auth import get_user_model
 from django.forms import model_to_dict
 from django.urls import reverse
 from rest_framework import status
 
 pytestmark = pytest.mark.django_db
 
-User = get_user_model()
 
 post_url = reverse("blog:api-v1:posts-list")
 

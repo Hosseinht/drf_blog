@@ -52,6 +52,8 @@ def update_post(validated_data, author, slug):
         post.image = validated_data["image"]
     if "status" in validated_data:
         post.status = validated_data["status"]
+    if "published_at" in validated_data:
+        post.published_at = validated_data["published_at"]
 
     post.full_clean()
     post.save()

@@ -124,9 +124,9 @@ class LikeViewSet(ViewSet):
     permission_classes = [IsAuthenticated]
 
     def create(self, request, post_slug):
-        print(post_slug)
         like = Like.objects.filter(like_post__slug=post_slug, like_user=request.user)
         post = Post.objects.get(slug=post_slug)
+
         if like.exists():
             like.delete()
             return Response({"message": "Like deleted."})
