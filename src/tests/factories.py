@@ -23,7 +23,7 @@ class CategoryFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Category
 
-    name = fake.text(max_nb_chars=5)
+    name = factory.LazyAttribute(lambda _: f"{fake.text(max_nb_chars=5)}")
 
 
 class PostFactory(factory.django.DjangoModelFactory):

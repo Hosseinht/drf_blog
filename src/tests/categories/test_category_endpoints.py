@@ -22,7 +22,7 @@ class TestCreateCategory:
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_common_user_can_not_create_category_return_403(
-        self, api_client, user_factory, category_factory
+        self, api_client, user_factory
     ):
         user = user_factory.create()
 

@@ -97,6 +97,28 @@ class TestGetPost:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    def test_filter_posts_return_200(
+        self, api_client, post_factory, category_factory, media_root
+    ):
+        category1 = category_factory.create(name="sport")
+        category2 = category_factory.create(name="technology")
+        post1 = post_factory.create(category=category1)
+        post2 = post_factory.create(category=category1)
+        post3 = post_factory.create(category=category2)
+
+        response = api_client.get(f"{post_url}?category__name=sport")
+
+        assert len(response.data["results"]) == 2
+
+    def test_search_posts_return_200(self, api_client, post_factory, media_root):
+
+        post1 = post_factory.create(title="title")
+        post2 = post_factory.create(title="post")
+
+        response = api_client.get(f"{post_url}?search=title")
+
+        assert len(response.data["results"]) == 1
+
 
 class TestUpdatePost:
     def test_anonymous_user_can_not_update_post_return_401(
