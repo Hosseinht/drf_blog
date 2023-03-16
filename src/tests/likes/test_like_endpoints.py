@@ -12,7 +12,7 @@ post_url = reverse("blog:api-v1:posts-list")
 
 class TestLikes:
     def test_anonymous_user_can_not_like_a_post_return_401(
-        self, api_client, create_post, media_root
+        self, api_client, media_root, create_post
     ):
 
         response = api_client.post(f"{post_url}{create_post.slug}/likes/")
@@ -45,7 +45,7 @@ class TestLikes:
         assert response.status_code == status.HTTP_200_OK
         assert not Like.objects.filter(like_user=user, like_post=post).exists()
 
-    def test_like_count(self, user_factory, post_factory, like_factory):
+    def test_like_count(self, user_factory, post_factory, like_factory, media_root):
         user = user_factory.create_batch(size=2)
         post = post_factory.create_batch(size=2)
 

@@ -73,9 +73,7 @@ class TestGetPost:
         assert response.status_code == status.HTTP_200_OK
         assert len(json.loads(response.content)) == 4
 
-    def test_get_get_a_single_post_return_200(
-        self, api_client, create_post, media_root
-    ):
+    def test_get_a_single_post_return_200(self, api_client, create_post, media_root):
         response = api_client.get(f"{post_url}{create_post.slug}/")
 
         assert response.status_code == status.HTTP_200_OK
@@ -97,7 +95,7 @@ class TestGetPost:
     def test_if_post_doesnt_exist_return_400(self, api_client):
         response = api_client.get(f"{post_url}test_slug/")
 
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestUpdatePost:

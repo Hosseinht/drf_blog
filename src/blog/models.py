@@ -1,11 +1,16 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=20)
+    name = models.CharField(max_length=20, unique=True)
+
+    def clean(self):
+        self.name = self.name.capitalize()
+        super().clean()
 
     def __str__(self):
         return self.name

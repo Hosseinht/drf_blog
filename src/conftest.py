@@ -16,6 +16,10 @@ register(LikeFactory)
 
 @pytest.fixture
 def media_root():
+    """
+    This function change the media root to tests/test_data/media/posts
+    and after the test is finished it will delete the photo
+    """
     path = os.path.join(settings.BASE_DIR, "tests/test_data/media/posts")
     os.makedirs(path, exist_ok=True)
     settings.MEDIA_ROOT = path

@@ -1,6 +1,10 @@
 from django.db import IntegrityError
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.permissions import (
+    IsAuthenticatedOrReadOnly,
+    IsAuthenticated,
+    IsAdminUser,
+)
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
 from django.contrib.auth import get_user_model
@@ -15,8 +19,9 @@ from blog.services import create_post, delete_post, update_post
 from .paginations import (
     get_paginated_response,
     get_paginated_response_context,
+    PostPagination,
 )
-from .permissions import IsOwnerOrReadOnly
+from .permissions import IsOwnerOrReadOnly, IsAdminUserOrReadOnly
 from .serializers import CategorySerializer, PostSerializer, FilterSerializer
 
 User = get_user_model()
@@ -41,13 +46,12 @@ class PostViewSet(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return get_paginated_response_context(
-            pagination_class=PageNumberPagination,
+            pagination_class=PostPagination,
             serializer_class=PostSerializer,
             queryset=queryset,
             request=request,
             view=self,
         )
-        # return Response(serializer.data, status=status.HTTP_200_OK)
 
     # @swagger_auto_schema(request_body=PostSerializer, response=PostSerializer)
     def partial_update(self, request, slug):
@@ -67,7 +71,7 @@ class PostViewSet(ViewSet):
             update_post(validated_data, author, slug)
         except Post.DoesNotExist:
             return Response(
-                {"detail": "Post does not exist"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Post does not exist"}, status=status.HTTP_404_NOT_FOUND
             )
         # serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -78,7 +82,7 @@ class PostViewSet(ViewSet):
             post = get_post(slug)
         except Post.DoesNotExist:
             return Response(
-                {"detail": "Post does not exist"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Post does not exist"}, status=status.HTTP_404_NOT_FOUND
             )
         serializer = PostSerializer(post, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -89,7 +93,7 @@ class PostViewSet(ViewSet):
             delete_post(slug)
         except Post.DoesNotExist:
             return Response(
-                {"detail": "Post does not exist"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Post does not exist"}, status=status.HTTP_404_NOT_FOUND
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -138,3 +142,6 @@ class LikeViewSet(ViewSet):
 class CategoryViewSet(ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+
+    permission_classes = [IsAdminUserOrReadOnly]
+    pagination_class = PostPagination

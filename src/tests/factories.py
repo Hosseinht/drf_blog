@@ -43,8 +43,6 @@ class PostFactory(factory.django.DjangoModelFactory):
         format="JPEG",
     )
     status = True
-    # created_at = factory.LazyAttribute(lambda _: f"{timezone.now()}")
-    # updated_at = factory.LazyAttribute(lambda _: f"{timezone.now()}")
     published_at = timezone.now()
 
 
