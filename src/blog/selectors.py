@@ -1,21 +1,12 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Count
+from rest_framework.exceptions import NotFound
 
 
-from blog.models import Post
 from blog.api.v1.filters import PostFilter
+from blog.models import Post, Comment
 
 User = get_user_model()
-
-
-def get_author(request):
-    return User.objects.get(id=request.user.id)
-
-
-def get_slug():
-    queryset = Post.objects.select_related("author", "category").all()
-    for post in queryset:
-        return post.slug
 
 
 def get_posts(filters=None):
@@ -36,3 +27,17 @@ def get_post(slug):
         .filter(status=True)
         .get(slug=slug)
     )
+
+
+def get_comments(post_slug):
+    queryset = Comment.objects.select_related("comment_user", "comment_post").filter(
+        comment_post__slug=post_slug
+    )
+    if queryset:
+        return queryset
+    else:
+        raise NotFound({"detail": "Post not found."})
+
+
+def get_comment(pk):
+    return Comment.objects.get(pk=pk)

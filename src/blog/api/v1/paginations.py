@@ -1,7 +1,7 @@
-from rest_framework.pagination import PageNumberPagination
 from collections import OrderedDict
 
 from rest_framework.pagination import LimitOffsetPagination as _LimitOffsetPagination
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 

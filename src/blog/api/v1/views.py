@@ -1,28 +1,35 @@
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.permissions import (
-    IsAuthenticatedOrReadOnly,
-    IsAuthenticated,
-    IsAdminUser,
-)
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
-from django.contrib.auth import get_user_model
-from rest_framework.pagination import PageNumberPagination
 
-from drf_yasg.utils import swagger_auto_schema
-
-from blog.models import Category, Post, Like
-from blog.selectors import get_posts, get_post
-from blog.services import create_post, delete_post, update_post
+from blog.models import Category, Like, Post, Comment
+from blog.selectors import get_post, get_posts, get_comments, get_comment
+from blog.services import (
+    create_post,
+    delete_post,
+    update_post,
+    create_comment,
+    update_comment,
+    delete_comment,
+)
 
 from .paginations import (
+    PostPagination,
     get_paginated_response,
     get_paginated_response_context,
-    PostPagination,
 )
-from .permissions import IsOwnerOrReadOnly, IsAdminUserOrReadOnly
-from .serializers import CategorySerializer, PostSerializer, FilterSerializer
+from .permissions import IsAdminUserOrReadOnly, IsOwnerOrReadOnly
+from .serializers import (
+    CategorySerializer,
+    FilterSerializer,
+    PostSerializer,
+    CommentSerializer,
+)
 
 User = get_user_model()
 
@@ -145,3 +152,71 @@ class CategoryViewSet(ModelViewSet):
 
     permission_classes = [IsAdminUserOrReadOnly]
     pagination_class = PostPagination
+
+
+class CommentViewSet(ViewSet):
+    serializer = CommentSerializer
+
+    def list(self, request, post_slug):
+        queryset = get_comments(post_slug=post_slug)
+
+        return get_paginated_response_context(
+            pagination_class=PostPagination,
+            serializer_class=CommentSerializer,
+            queryset=queryset,
+            request=request,
+            view=self,
+        )
+
+    def create(self, request, post_slug):
+        serializer = self.serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+
+        user = request.user
+
+        try:
+            post = get_post(slug=post_slug)
+        except ObjectDoesNotExist:
+            return Response(
+                {"detail": "Post not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        create_comment(
+            user=user,
+            post=post,
+            comment=validated_data.get("comment"),
+        )
+
+        # serializer = self.serializer(comment)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            comment = get_comment(pk=self.kwargs["pk"])
+        except Comment.DoesNotExist:
+            return Response(
+                {"detail": "Comment not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = self.serializer(comment)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def update(self, request, *args, **kwargs):
+        comment = get_comment(pk=self.kwargs["pk"])
+        serializer = self.serializer(data=request.data, instance=comment)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+
+        update_comment(comment=validated_data.get("comment"), pk=self.kwargs["pk"])
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            delete_comment(pk=self.kwargs["pk"])
+        except Comment.DoesNotExist:
+            return Response(
+                {"detail": "Post does not exist"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from blog.models import Category, Post
+from blog.models import Category, Post, Comment
 
 User = get_user_model()
 
@@ -76,3 +76,13 @@ class FilterSerializer(serializers.Serializer):
     author__in = serializers.CharField(required=False, max_length=100)
     category__name = serializers.CharField(required=False, max_length=100)
     created_at__range = serializers.CharField(required=False, max_length=100)
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    comment_user = serializers.StringRelatedField()
+    comment_post = serializers.StringRelatedField()
+
+    class Meta:
+        model = Comment
+        fields = ["id", "comment_user", "comment_post", "comment", "created_at"]
+        read_only_fields = ["created_at"]

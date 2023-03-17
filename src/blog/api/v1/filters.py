@@ -1,11 +1,9 @@
-from django_filters import (
-    CharFilter,
-    FilterSet,
-)
 from django.contrib.postgres.search import SearchVector
 from django.utils import timezone
-from blog.models import Post
+from django_filters import CharFilter, FilterSet
 from rest_framework.exceptions import APIException
+
+from blog.models import Post
 
 
 class PostFilter(FilterSet):

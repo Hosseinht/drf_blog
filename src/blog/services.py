@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils.text import slugify
 
-from blog.models import Post
+from blog.models import Post, Comment
 
 User = get_user_model()
 
@@ -58,3 +58,20 @@ def update_post(validated_data, author, slug):
     post.full_clean()
     post.save()
     return post
+
+
+def create_comment(user, post, comment):
+    return Comment.objects.create(comment_user=user, comment_post=post, comment=comment)
+
+
+def update_comment(comment, pk):
+    get_comment = Comment.objects.get(pk=pk)
+    get_comment.comment = comment
+
+    get_comment.full_clean()
+    get_comment.save()
+    return get_comment
+
+
+def delete_comment(pk):
+    return Comment.objects.get(pk=pk).delete()
