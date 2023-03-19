@@ -66,6 +66,7 @@ class TestCreatePost:
 
 class TestGetPost:
     def test_get_list_of_posts_return_200(self, api_client, post_factory, media_root):
+
         post_factory.create_batch(4)
 
         response = api_client.get(post_url)
@@ -92,7 +93,7 @@ class TestGetPost:
         )
         # assert create_post.image.url in response.data["image"]
 
-    def test_if_post_doesnt_exist_return_400(self, api_client):
+    def test_if_post_doesnt_exist_return_404(self, api_client):
         response = api_client.get(f"{post_url}test_slug/")
 
         assert response.status_code == status.HTTP_404_NOT_FOUND

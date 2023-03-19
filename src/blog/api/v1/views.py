@@ -23,7 +23,7 @@ from .paginations import (
     get_paginated_response,
     get_paginated_response_context,
 )
-from .permissions import IsAdminUserOrReadOnly, IsOwnerOrReadOnly
+from .permissions import IsAdminUserOrReadOnly, IsOwnerOrReadOnly, CommentUserOrReadOnly
 from .serializers import (
     CategorySerializer,
     FilterSerializer,
@@ -156,6 +156,7 @@ class CategoryViewSet(ModelViewSet):
 
 class CommentViewSet(ViewSet):
     serializer = CommentSerializer
+    permission_classes = [CommentUserOrReadOnly]
 
     def list(self, request, post_slug):
         queryset = get_comments(post_slug=post_slug)
@@ -182,13 +183,13 @@ class CommentViewSet(ViewSet):
                 {"detail": "Post not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        create_comment(
+        comment = create_comment(
             user=user,
             post=post,
             comment=validated_data.get("comment"),
         )
 
-        # serializer = self.serializer(comment)
+        serializer = self.serializer(comment)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def retrieve(self, request, *args, **kwargs):
@@ -203,6 +204,7 @@ class CommentViewSet(ViewSet):
 
     def update(self, request, *args, **kwargs):
         comment = get_comment(pk=self.kwargs["pk"])
+        self.check_object_permissions(request, comment)
         serializer = self.serializer(data=request.data, instance=comment)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
@@ -212,11 +214,12 @@ class CommentViewSet(ViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
+        self.check_object_permissions(request, get_comment(pk=self.kwargs["pk"]))
         try:
             delete_comment(pk=self.kwargs["pk"])
         except Comment.DoesNotExist:
             return Response(
-                {"detail": "Post does not exist"}, status=status.HTTP_404_NOT_FOUND
+                {"detail": "Comment not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

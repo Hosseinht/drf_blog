@@ -30,13 +30,12 @@ def get_post(slug):
 
 
 def get_comments(post_slug):
-    queryset = Comment.objects.select_related("comment_user", "comment_post").filter(
+    if not Post.objects.filter(slug=post_slug).exists():
+        raise NotFound({"detail": "Post not found."})
+
+    return Comment.objects.select_related("comment_user", "comment_post").filter(
         comment_post__slug=post_slug
     )
-    if queryset:
-        return queryset
-    else:
-        raise NotFound({"detail": "Post not found."})
 
 
 def get_comment(pk):

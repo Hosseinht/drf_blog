@@ -4,7 +4,7 @@ from django.utils.text import slugify
 from faker import Faker
 
 from accounts.models import User
-from blog.models import Category, Like, Post
+from blog.models import Category, Comment, Like, Post
 
 fake = Faker()
 
@@ -52,3 +52,12 @@ class LikeFactory(factory.django.DjangoModelFactory):
 
     like_user = factory.SubFactory(UserFactory)
     like_post = factory.SubFactory(PostFactory)
+
+
+class CommentFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Comment
+
+    comment_user = factory.SubFactory(UserFactory)
+    comment_post = factory.SubFactory(PostFactory)
+    comment = factory.lazy_attribute(lambda _: f"{fake.text(max_nb_chars=5)}")
