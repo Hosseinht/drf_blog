@@ -1,9 +1,14 @@
+import jwt
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils.encoding import smart_bytes
 from django.utils.http import urlsafe_base64_encode
+from jwt import ExpiredSignatureError, DecodeError
+from rest_framework import status
+from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
@@ -51,3 +56,40 @@ def send_reset_password_email(
     email.content_subtype = "html"
     # SendEmailThread(email).start()
     email.send()
+
+
+def activate_user(token):
+    try:
+        token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        # decode the incoming token
+        user_id = token.get("user_id")
+
+        user = User.objects.get(id=user_id)
+
+        if not user.is_verified:
+            user.is_verified = True
+            user.save()
+
+            return Response(
+                {
+                    "detail": "Thank you for your email confirmation. Now you can login your account."
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(
+            {"detail": "Your account is already verified."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    except ExpiredSignatureError:
+        # if token expired
+        return Response(
+            {"detail": "Activation link is expired"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    except DecodeError:
+        # if token is not valid
+        return Response(
+            {"detail": "Token is invalid"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )

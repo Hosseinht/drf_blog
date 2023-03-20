@@ -9,6 +9,7 @@ from accounts.models import Profile
 
 User = get_user_model()
 
+
 class RegisterUserSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(max_length=255, write_only=True)
 
@@ -21,10 +22,6 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         except exceptions.ValidationError as e:
             raise serializers.ValidationError({"password": list(e.messages)})
         return super().validate(attrs)
-
-    def create(self, validated_data):
-        validated_data.pop("confirm_password", None)
-        return User.objects.create_user(**validated_data)
 
     class Meta:
         model = User

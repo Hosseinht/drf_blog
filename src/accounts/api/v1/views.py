@@ -1,11 +1,8 @@
-import jwt
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import smart_str
 from django.utils.http import urlsafe_base64_decode
-from jwt import DecodeError, ExpiredSignatureError
 from rest_framework import generics, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -28,30 +25,38 @@ from .serializers import (
     RegisterUserSerializer,
     ResendActivationLinkSerializer,
 )
+from ...services import create_user
+
+from ...utils import activate_user
 
 User = get_user_model()
 
 
 class RegisterUserView(generics.GenericAPIView):
-    """
-    post:
-        Send mobile number for Login.
-
-    parameters: [email,first_name,last_name,password]
-    """
-
     serializer_class = RegisterUserSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        email = serializer.validated_data["email"]
+        # serializer.save()
+        validated_data = serializer.validated_data
+        try:
+            create_user(
+                email=validated_data["email"],
+                first_name=validated_data["first_name"],
+                last_name=validated_data["last_name"],
+                password=validated_data["password"],
+            )
+
+        except Exception as e:
+            return Response({"detail": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        email = validated_data["email"]
         data = {
             # post method will return all fields but password shouldn't be returned
             "email": email,
-            "first_name": serializer.validated_data["first_name"],
-            "last_name": serializer.validated_data["last_name"],
+            "first_name": validated_data["first_name"],
+            "last_name": validated_data["last_name"],
         }
         user = get_object_or_404(User, email=email)
 
@@ -66,7 +71,12 @@ class RegisterUserView(generics.GenericAPIView):
         return Response(data, status=status.HTTP_201_CREATED)
 
 
-class LoginView(ObtainAuthToken):
+class UserActivationView(APIView):
+    def get(self, request, token, *args, **kwargs):
+        return activate_user(token)
+
+
+class TokenLoginView(ObtainAuthToken):
     serializer_class = LoginSerializer
 
     def post(self, request, *args, **kwargs):
@@ -79,7 +89,7 @@ class LoginView(ObtainAuthToken):
         return Response({"token": token.key, "user_id": user.pk, "email": user.email})
 
 
-class LogoutView(APIView):
+class TokenLogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -88,31 +98,33 @@ class LogoutView(APIView):
 
 
 class CreateJwtTokenView(TokenObtainPairView):
+    """
+    View for creating a JWT token for user to authenticate
+    """
+
     serializer_class = CreateJwtTokenSerializer
 
 
 class ChangePasswordView(generics.GenericAPIView):
-    model = User
     permission_classes = [IsAuthenticated]
     serializer_class = ChangePasswordSerializer
 
-    def get_object(self, queryset=None):
-        user = self.request.user
-        return user
-
     def put(self, request):
-        user = self.get_object()
+        user = self.request.user
         serializer = self.get_serializer(data=request.data)
 
         serializer.is_valid(raise_exception=True)
-        # Check old password
-        if not user.check_password(serializer.data.get("old_password")):
+        validated_data = serializer.validated_data
+
+        if not user.check_password(validated_data["old_password"]):
+            # check_password is a built-in function in Django's User model that takes a password as an argument,
+            # and returns True if the password matches the one stored in the database for the user, or False otherwise.
             return Response(
-                {"old_password": ["Wrong password."]},
+                {"detail": "Wrong password."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         # set_password also hashes the password that the user will get
-        user.set_password(serializer.data.get("new_password"))
+        user.set_password(validated_data["new_password"])
         user.save()
 
         return Response(
@@ -129,41 +141,6 @@ class ProfileAPIView(generics.RetrieveUpdateAPIView):
         queryset = self.get_queryset()
         obj = get_object_or_404(queryset, user=self.request.user)
         return obj
-
-
-class UserActivationView(APIView):
-    def get(self, request, token, *args, **kwargs):
-        try:
-            token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-            # decode the incoming token
-            user_id = token.get("user_id")
-            user = User.objects.get(id=user_id)
-            if not user.is_verified:
-                user.is_verified = True
-                user.save()
-                return Response(
-                    {
-                        "detail": "Thank you for your email confirmation. Now you can login your account."
-                    },
-                    status=status.HTTP_200_OK,
-                )
-
-            return Response(
-                {"detail": "Your account is already verified."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        except ExpiredSignatureError:
-            # if token expired
-            return Response(
-                {"detail": "Activation link is expired"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        except DecodeError:
-            # if token is not valid
-            return Response(
-                {"detail": "Token is invalid"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
 
 class ResendActivationLinkView(generics.GenericAPIView):
