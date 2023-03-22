@@ -38,10 +38,11 @@ class RegisterUserView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # serializer.save()
+
         validated_data = serializer.validated_data
+
         try:
-            create_user(
+            post_user = create_user(
                 email=validated_data["email"],
                 first_name=validated_data["first_name"],
                 last_name=validated_data["last_name"],
@@ -52,12 +53,6 @@ class RegisterUserView(generics.GenericAPIView):
             return Response({"detail": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
 
         email = validated_data["email"]
-        data = {
-            # post method will return all fields but password shouldn't be returned
-            "email": email,
-            "first_name": validated_data["first_name"],
-            "last_name": validated_data["last_name"],
-        }
         user = get_object_or_404(User, email=email)
 
         user_id = user.id
@@ -68,7 +63,8 @@ class RegisterUserView(generics.GenericAPIView):
         send_verification_email_task.delay(
             user_id, receiver, current_site, mail_subject, email_template
         )
-        return Response(data, status=status.HTTP_201_CREATED)
+        serializer = RegisterUserSerializer(post_user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class UserActivationView(APIView):

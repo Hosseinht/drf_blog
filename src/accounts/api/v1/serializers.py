@@ -26,12 +26,14 @@ class RegisterUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
+            "id",
             "email",
             "first_name",
             "last_name",
             "password",
             "confirm_password",
         ]
+        write_only_fields = ["password", "confirm_password"]
 
 
 class LoginSerializer(serializers.Serializer):
