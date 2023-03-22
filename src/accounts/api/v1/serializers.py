@@ -101,18 +101,9 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(source="user.email", read_only=True)
+    email = serializers.EmailField(source="user.email")
     first_name = serializers.CharField(source="user.first_name")
     last_name = serializers.CharField(source="user.last_name")
-
-    def update(self, instance, validated_data):
-        user = validated_data.pop("user")
-
-        instance.user.first_name = user["first_name"]
-        instance.user.last_name = user["last_name"]
-        instance.user.save()
-
-        return super().update(instance, validated_data)
 
     class Meta:
         model = Profile
