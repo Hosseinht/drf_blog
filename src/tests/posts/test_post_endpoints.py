@@ -24,7 +24,8 @@ class TestCreatePost:
     ):
         author = user_factory.create()
         post1 = post_factory.create(author=author)
-
+        print(author)
+        print(post1)
         api_client.force_authenticate(author)
 
         post_data = {
@@ -81,14 +82,15 @@ class TestGetPost:
 
     def test_if_post_exist_return_200(self, api_client, create_post, media_root):
         response = api_client.get(f"{post_url}{create_post.slug}/")
+        response_data = response.data["results"]
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["id"] == create_post.id
-        assert response.data["category"] == create_post.category.name
-        assert response.data["content"] == create_post.content
-        assert response.data["image"] == f"http://testserver/media/{create_post.image}"
-        assert response.data["status"] == create_post.status
-        assert response.data["published_at"] == create_post.published_at.strftime(
+        assert response_data["id"] == create_post.id
+        assert response_data["category"] == create_post.category.name
+        assert response_data["content"] == create_post.content
+        assert response_data["image"] == f"http://testserver/media/{create_post.image}"
+        assert response_data["status"] == create_post.status
+        assert response_data["published_at"] == create_post.published_at.strftime(
             "%Y-%m-%d %H:%M:%S"
         )
         # assert create_post.image.url in response.data["image"]

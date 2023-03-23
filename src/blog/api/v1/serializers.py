@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from blog.models import Category, Post, Comment
+from blog.models import Category, Comment, Post
 
 User = get_user_model()
 
@@ -15,6 +15,16 @@ class CategorySerializer(serializers.ModelSerializer):
         ]
 
 
+class CommentSerializer(serializers.ModelSerializer):
+    comment_user = serializers.StringRelatedField()
+    comment_post = serializers.StringRelatedField()
+
+    class Meta:
+        model = Comment
+        fields = ["id", "comment_user", "comment_post", "comment", "created_at"]
+        read_only_fields = ["created_at"]
+
+
 class PostSerializer(serializers.ModelSerializer):
     likes = serializers.IntegerField(read_only=True)
     absolute_url = serializers.SerializerMethodField(read_only=True)
@@ -25,6 +35,8 @@ class PostSerializer(serializers.ModelSerializer):
         queryset=Category.objects.all(),
         slug_field="id",
     )
+
+    comments = CommentSerializer(many=True, read_only=True)
 
     def get_absolute_url(self, obj):
         request = self.context.get("request")
@@ -41,6 +53,7 @@ class PostSerializer(serializers.ModelSerializer):
             rep.pop("absolute_url", None)
         else:
             rep.pop("content", None)
+            rep.pop("comments", None)
 
         rep["category"] = CategorySerializer(instance.category).data["name"]
 
@@ -58,6 +71,7 @@ class PostSerializer(serializers.ModelSerializer):
             "status",
             "image",
             "likes",
+            "comments",
             "absolute_url",
             "created_at",
             "updated_at",
@@ -76,13 +90,3 @@ class FilterSerializer(serializers.Serializer):
     author__in = serializers.CharField(required=False, max_length=100)
     category__name = serializers.CharField(required=False, max_length=100)
     created_at__range = serializers.CharField(required=False, max_length=100)
-
-
-class CommentSerializer(serializers.ModelSerializer):
-    comment_user = serializers.StringRelatedField()
-    comment_post = serializers.StringRelatedField()
-
-    class Meta:
-        model = Comment
-        fields = ["id", "comment_user", "comment_post", "comment", "created_at"]
-        read_only_fields = ["created_at"]

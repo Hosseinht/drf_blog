@@ -55,9 +55,17 @@ class Like(models.Model):
 
 class Comment(models.Model):
     comment_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    comment_post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    comment_post = models.ForeignKey(
+        Post, on_delete=models.CASCADE, related_name="comments"
+    )
     comment = models.TextField(max_length=500)
     created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return f"{self.comment_user} - {self.comment_post}"
+
+
+# def test_if_post_exist_return_200(self, api_client, create_post, media_root):
+#  def test_authenticated_user_can_create_post_return_201(
+#         self, api_client, post_factory, user_factory, media_root
+#     ):

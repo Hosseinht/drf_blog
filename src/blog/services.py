@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils.text import slugify
 
-from blog.models import Post, Comment
+from blog.models import Comment, Post
 
 User = get_user_model()
 

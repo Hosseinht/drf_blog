@@ -33,7 +33,10 @@ class RegisterUserSerializer(serializers.ModelSerializer):
             "password",
             "confirm_password",
         ]
-        write_only_fields = ["password", "confirm_password"]
+        extra_kwargs = {
+            "password": {"write_only": True},
+            "confirm_password": {"write_only": True},
+        }
 
 
 class LoginSerializer(serializers.Serializer):

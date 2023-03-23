@@ -53,6 +53,13 @@ class RegisterUserView(generics.GenericAPIView):
             return Response({"detail": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
 
         email = validated_data["email"]
+        # data = {
+        #     # post method will return all fields but password shouldn't be returned
+        #     "id":validated_data[]
+        #     "email": email,
+        #     "first_name": validated_data["first_name"],
+        #     "last_name": validated_data["last_name"],
+        # }
         user = get_object_or_404(User, email=email)
 
         user_id = user.id

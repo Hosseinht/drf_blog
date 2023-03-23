@@ -3,32 +3,34 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
 
-from blog.models import Category, Like, Post, Comment
-from blog.selectors import get_post, get_posts, get_comments, get_comment
+from blog.models import Category, Comment, Like, Post
+from blog.selectors import get_comment, get_comments, get_post, get_posts
 from blog.services import (
-    create_post,
-    delete_post,
-    update_post,
     create_comment,
-    update_comment,
+    create_post,
     delete_comment,
+    delete_post,
+    update_comment,
+    update_post,
 )
 
 from .paginations import (
+    PostCommentPagination,
     PostPagination,
     get_paginated_response,
     get_paginated_response_context,
 )
-from .permissions import IsAdminUserOrReadOnly, IsOwnerOrReadOnly, CommentUserOrReadOnly
+from .permissions import CommentUserOrReadOnly, IsAdminUserOrReadOnly, IsOwnerOrReadOnly
 from .serializers import (
     CategorySerializer,
+    CommentSerializer,
     FilterSerializer,
     PostSerializer,
-    CommentSerializer,
 )
 
 User = get_user_model()
@@ -39,6 +41,7 @@ class PostViewSet(ViewSet):
     serializer_class = PostSerializer
     lookup_field = "slug"
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    paginator = PageNumberPagination
 
     def list(self, request):
         request = self.request
@@ -91,8 +94,15 @@ class PostViewSet(ViewSet):
             return Response(
                 {"detail": "Post does not exist"}, status=status.HTTP_404_NOT_FOUND
             )
+
+        # Pagination for Post's comments
+        comments = post.comments.all()
+        paginator = PostCommentPagination()  # 10 comments per page
+        page_obj = paginator.paginate_queryset(comments, request=self.request)
         serializer = PostSerializer(post, context={"request": request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = serializer.data
+        data["comments"] = CommentSerializer(page_obj, many=True).data
+        return paginator.get_paginated_response(data)
 
     def destroy(self, request, slug):
         self.check_object_permissions(request, get_post(slug))
@@ -129,29 +139,6 @@ class PostViewSet(ViewSet):
             )
         serializer = PostSerializer(post, context={"request": request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-class LikeViewSet(ViewSet):
-    permission_classes = [IsAuthenticated]
-
-    def create(self, request, post_slug):
-        like = Like.objects.filter(like_post__slug=post_slug, like_user=request.user)
-        post = Post.objects.get(slug=post_slug)
-
-        if like.exists():
-            like.delete()
-            return Response({"message": "Like deleted."})
-        else:
-            Like.objects.create(like_user=request.user, like_post=post)
-            return Response({"message": "Like created."})
-
-
-class CategoryViewSet(ModelViewSet):
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-
-    permission_classes = [IsAdminUserOrReadOnly]
-    pagination_class = PostPagination
 
 
 class CommentViewSet(ViewSet):
@@ -223,3 +210,26 @@ class CommentViewSet(ViewSet):
             )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class LikeViewSet(ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, post_slug):
+        like = Like.objects.filter(like_post__slug=post_slug, like_user=request.user)
+        post = Post.objects.get(slug=post_slug)
+
+        if like.exists():
+            like.delete()
+            return Response({"message": "Like deleted."})
+        else:
+            Like.objects.create(like_user=request.user, like_post=post)
+            return Response({"message": "Like created."})
+
+
+class CategoryViewSet(ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+    permission_classes = [IsAdminUserOrReadOnly]
+    pagination_class = PostPagination

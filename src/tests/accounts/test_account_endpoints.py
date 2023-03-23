@@ -1,16 +1,13 @@
-import json
+from unittest.mock import MagicMock, patch
 
 import jwt
 import pytest
-from unittest.mock import patch, MagicMock
-
 from django.urls import reverse
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from accounts.services import create_user
 from accounts.models import User
-from accounts.utils import send_verification_email
+from accounts.services import create_user
 
 pytestmark = pytest.mark.django_db
 
@@ -54,7 +51,7 @@ class TestCreateUser:
                 "confirm_password": "j.123456",
             },
         )
-        print(response.data)
+
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data["id"] > 0
 
@@ -151,6 +148,5 @@ class TestJwtToken:
             path=reverse("accounts:api-v1:jwt-verify"),
             data=body,
         )
-        print(response.data)
 
         assert response.status_code == status.HTTP_200_OK
