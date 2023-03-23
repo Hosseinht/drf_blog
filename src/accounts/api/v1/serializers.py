@@ -6,6 +6,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from accounts.models import Profile
+from blog.api.v1.serializers import FavoritePostSerializer
 
 User = get_user_model()
 
@@ -105,24 +106,6 @@ class ChangePasswordSerializer(serializers.Serializer):
         return super().validate(attrs)
 
 
-class ProfileSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(source="user.email")
-    first_name = serializers.CharField(source="user.first_name")
-    last_name = serializers.CharField(source="user.last_name")
-
-    class Meta:
-        model = Profile
-        fields = [
-            "id",
-            "email",
-            "first_name",
-            "last_name",
-            "image",
-            "bio",
-            "birth_date",
-        ]
-
-
 class ResendActivationLinkSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
@@ -169,3 +152,23 @@ class PasswordResetTokenValidateSerializer(serializers.Serializer):
             raise serializers.ValidationError({"password": list(e.messages)})
 
         return super().validate(attrs)
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source="user.email")
+    first_name = serializers.CharField(source="user.first_name")
+    last_name = serializers.CharField(source="user.last_name")
+    favoritepost = FavoritePostSerializer(many=True)
+
+    class Meta:
+        model = Profile
+        fields = [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "image",
+            "bio",
+            "birth_date",
+            "favoritepost",
+        ]

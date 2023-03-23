@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 from rest_framework import serializers
 
-from blog.models import Category, Comment, Post
+from blog.models import Category, Comment, Post, FavoritePost
 
 User = get_user_model()
 
@@ -90,3 +91,39 @@ class FilterSerializer(serializers.Serializer):
     author__in = serializers.CharField(required=False, max_length=100)
     category__name = serializers.CharField(required=False, max_length=100)
     created_at__range = serializers.CharField(required=False, max_length=100)
+
+
+class SimplePostSerializer(serializers.ModelSerializer):
+    likes = serializers.IntegerField(read_only=True)
+    absolute_url = serializers.SerializerMethodField(read_only=True)
+
+    author = serializers.SlugRelatedField(slug_field="full_name", read_only=True)
+
+    category = serializers.SlugRelatedField(slug_field="name", read_only=True)
+
+    def get_absolute_url(self, obj):
+        request = self.context.get("request")
+        if obj:
+            return request.build_absolute_uri(
+                reverse("blog:api-v1:posts-detail", args=[obj.slug])
+            )
+
+    class Meta:
+        model = Post
+        fields = [
+            "id",
+            "author",
+            "category",
+            "title",
+            "slug",
+            "likes",
+            "absolute_url",
+        ]
+
+
+class FavoritePostSerializer(serializers.ModelSerializer):
+    post = SimplePostSerializer(read_only=True)
+
+    class Meta:
+        model = FavoritePost
+        fields = ["id", "post"]

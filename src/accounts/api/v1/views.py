@@ -14,6 +14,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from accounts.models import Profile
 from accounts.tasks import send_reset_password_email_task, send_verification_email_task
+from blog.api.v1.serializers import FavoritePostSerializer
 
 from .serializers import (
     ChangePasswordSerializer,
@@ -53,13 +54,6 @@ class RegisterUserView(generics.GenericAPIView):
             return Response({"detail": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
 
         email = validated_data["email"]
-        # data = {
-        #     # post method will return all fields but password shouldn't be returned
-        #     "id":validated_data[]
-        #     "email": email,
-        #     "first_name": validated_data["first_name"],
-        #     "last_name": validated_data["last_name"],
-        # }
         user = get_object_or_404(User, email=email)
 
         user_id = user.id
@@ -203,13 +197,25 @@ class ProfileAPIView(generics.RetrieveUpdateAPIView):
     """
 
     serializer_class = ProfileSerializer
-    queryset = Profile.objects.select_related("user").all()
+    queryset = (
+        Profile.objects.select_related("user")
+        .prefetch_related("favoritepost__post__category", "favoritepost__post__author")
+        .all()
+    )
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
         queryset = self.get_queryset()
         obj = get_object_or_404(queryset, user=self.request.user)
         return obj
+
+    def retrieve(self, request, *args, **kwargs):
+        profile = self.get_object()
+        favorite_post = profile.favoritepost.all()
+        serializer = ProfileSerializer(profile, context={"request": request})
+        data = serializer.data
+        data["favoritepost"] = FavoritePostSerializer(favorite_post, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()

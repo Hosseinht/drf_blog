@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
 
+from accounts.models import Profile
 from blog.models import Category, Comment, Like, Post, FavoritePost
 from blog.selectors import get_comment, get_comments, get_post, get_posts
 from blog.services import (
@@ -101,7 +102,9 @@ class PostViewSet(ViewSet):
         page_obj = paginator.paginate_queryset(comments, request=self.request)
         serializer = PostSerializer(post, context={"request": request})
         data = serializer.data
-        data["comments"] = CommentSerializer(page_obj, many=True).data
+        data["comments"] = CommentSerializer(
+            page_obj, many=True, context={"request": request}
+        ).data
         return paginator.get_paginated_response(data)
 
     def destroy(self, request, slug):
@@ -240,7 +243,9 @@ class FavoritePostViewSet(ViewSet):
 
     def create(self, request, *args, **kwargs):
         slug = self.kwargs["post_slug"]
-        favorite_post = FavoritePost.objects.filter(post__slug=slug, user=request.user)
+        user = Profile.objects.get(user=request.user)
+        print(user)
+        favorite_post = FavoritePost.objects.filter(post__slug=slug, user=user)
         post = Post.objects.get(slug=slug)
 
         if favorite_post.exists():
@@ -249,5 +254,5 @@ class FavoritePostViewSet(ViewSet):
                 {"detail": "This post has been removed from your favorites."}
             )
         else:
-            FavoritePost.objects.create(post=post, user=request.user)
+            FavoritePost.objects.create(post=post, user=user)
             return Response({"detail": "This post has been added to your favorites."})

@@ -4,6 +4,8 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.models import Profile
+
 
 class Category(models.Model):
     name = models.CharField(max_length=20, unique=True)
@@ -42,10 +44,10 @@ class Post(models.Model):
 
 
 class FavoritePost(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    post = models.ForeignKey(
-        Post, on_delete=models.CASCADE, related_name="favoritepost"
+    user = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="favoritepost"
     )
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.user} - {self.post}"
