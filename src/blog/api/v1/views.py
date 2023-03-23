@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
 
-from blog.models import Category, Comment, Like, Post
+from blog.models import Category, Comment, Like, Post, FavoritePost
 from blog.selectors import get_comment, get_comments, get_post, get_posts
 from blog.services import (
     create_comment,
@@ -221,10 +221,10 @@ class LikeViewSet(ViewSet):
 
         if like.exists():
             like.delete()
-            return Response({"message": "Like deleted."})
+            return Response({"detail": "Like deleted."})
         else:
             Like.objects.create(like_user=request.user, like_post=post)
-            return Response({"message": "Like created."})
+            return Response({"detail": "Like created."})
 
 
 class CategoryViewSet(ModelViewSet):
@@ -233,3 +233,21 @@ class CategoryViewSet(ModelViewSet):
 
     permission_classes = [IsAdminUserOrReadOnly]
     pagination_class = PostPagination
+
+
+class FavoritePostViewSet(ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        slug = self.kwargs["post_slug"]
+        favorite_post = FavoritePost.objects.filter(post__slug=slug, user=request.user)
+        post = Post.objects.get(slug=slug)
+
+        if favorite_post.exists():
+            favorite_post.delete()
+            return Response(
+                {"detail": "This post has been removed from your favorites."}
+            )
+        else:
+            FavoritePost.objects.create(post=post, user=request.user)
+            return Response({"detail": "This post has been added to your favorites."})

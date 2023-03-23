@@ -12,7 +12,8 @@ router.register("categories", views.CategoryViewSet, basename="categories")
 # router.register("comments", views.CommentViewSet, basename="comments")
 
 posts_router = routers.NestedDefaultRouter(router, "posts", lookup="post")
-posts_router.register("likes", views.LikeViewSet, basename="likes")
+posts_router.register("like", views.LikeViewSet, basename="like")
+posts_router.register("favorite", views.FavoritePostViewSet, basename="favorite")
 posts_router.register("comments", views.CommentViewSet, basename="comments")
 
 urlpatterns = router.urls + posts_router.urls
