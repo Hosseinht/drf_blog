@@ -115,7 +115,6 @@ class SimplePostSerializer(serializers.ModelSerializer):
             "author",
             "category",
             "title",
-            "slug",
             "likes",
             "absolute_url",
         ]

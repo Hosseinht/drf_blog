@@ -102,9 +102,7 @@ class PostViewSet(ViewSet):
         page_obj = paginator.paginate_queryset(comments, request=self.request)
         serializer = PostSerializer(post, context={"request": request})
         data = serializer.data
-        data["comments"] = CommentSerializer(
-            page_obj, many=True, context={"request": request}
-        ).data
+        data["comments"] = CommentSerializer(page_obj, many=True).data
         return paginator.get_paginated_response(data)
 
     def destroy(self, request, slug):

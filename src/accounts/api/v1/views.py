@@ -15,6 +15,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from accounts.models import Profile
 from accounts.tasks import send_reset_password_email_task, send_verification_email_task
 from blog.api.v1.serializers import FavoritePostSerializer
+from .paginations import ProfileFavoritePostPagination
 
 from .serializers import (
     ChangePasswordSerializer,
@@ -212,16 +213,24 @@ class ProfileAPIView(generics.RetrieveUpdateAPIView):
     def retrieve(self, request, *args, **kwargs):
         profile = self.get_object()
         favorite_post = profile.favoritepost.all()
+        paginator = ProfileFavoritePostPagination()
+        page_obj = paginator.paginate_queryset(favorite_post, request=self.request)
         serializer = ProfileSerializer(profile, context={"request": request})
         data = serializer.data
-        data["favoritepost"] = FavoritePostSerializer(favorite_post, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        print(data)
+        data["favoritepost"] = FavoritePostSerializer(
+            page_obj, many=True, context={"request": request}
+        ).data
+        return paginator.get_paginated_response(data)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
 
-        serializer = self.get_serializer(instance=instance, data=request.data)
+        serializer = self.get_serializer(
+            instance=instance, data=request.data, partial=True
+        )
         serializer.is_valid(raise_exception=True)
+        print(serializer.data)
         validated_data = serializer.validated_data
         user = validated_data.pop("user")
 
