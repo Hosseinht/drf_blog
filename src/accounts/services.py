@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db import transaction
 
 User = get_user_model()
 
@@ -9,19 +10,17 @@ def create_user(email, first_name, last_name, password):
     )
 
 
-def update_profile(instance, user, bio, image, birth_date):
-    profile = instance
+@transaction.atomic
+def update_profile(instance, validated_data):
 
-    profile.user.first_name = user["first_name"]
-    profile.user.last_name = user["last_name"]
-    profile.user.full_clean()
-    profile.user.save()
+    user_data = validated_data.pop("user", {})
+    user = instance.user
+    for key, value in user_data.items():
+        setattr(user, key, value)
+        user.save()
 
-    profile.bio = bio
-    profile.image = image
-    profile.birth_date = birth_date
+    for key, value in validated_data.items():
+        setattr(instance, key, value)
+        instance.save()
 
-    profile.full_clean()
-    profile.save()
-
-    return profile
+    return instance

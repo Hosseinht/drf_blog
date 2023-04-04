@@ -62,20 +62,3 @@ def create_author(db, user_factory):
 @pytest.fixture()
 def create_comment(db, comment_factory, create_post, create_user):
     return comment_factory.create(comment_user=create_user, comment_post=create_post)
-
-
-@pytest.fixture()
-def book_payload(db, create_post, create_author):
-    author = create_author
-    post = create_post(
-        author=author,
-        category=create_post.category.id,
-        title="Title 1",
-        slug="title_1",
-        content="This is content",
-        image=create_post.image,
-        status=True,
-        created_at=create_post.created_at,
-        updated_at=create_post.updated_at,
-        published_at=create_post.published_at,
-    )

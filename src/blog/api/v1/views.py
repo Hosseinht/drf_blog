@@ -242,7 +242,6 @@ class FavoritePostViewSet(ViewSet):
     def create(self, request, *args, **kwargs):
         slug = self.kwargs["post_slug"]
         user = Profile.objects.get(user=request.user)
-        print(user)
         favorite_post = FavoritePost.objects.filter(post__slug=slug, user=user)
         post = Post.objects.get(slug=slug)
 

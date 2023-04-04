@@ -14,7 +14,9 @@ flake8==6.0.0
 Faker
 pytest-django
 pytest-factoryboy
+pytest-mock
 redis
+django-redis
 django-celery-beat
 django-celery-results
 drf-nested-routers

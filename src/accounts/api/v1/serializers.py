@@ -155,10 +155,10 @@ class PasswordResetTokenValidateSerializer(serializers.Serializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(source="user.email")
+    email = serializers.EmailField(source="user.email", read_only=True)
     first_name = serializers.CharField(source="user.first_name")
     last_name = serializers.CharField(source="user.last_name")
-    favoritepost = FavoritePostSerializer(many=True)
+    favoritepost = FavoritePostSerializer(many=True, read_only=True)
 
     class Meta:
         model = Profile

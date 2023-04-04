@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.sites.shortcuts import get_current_site
+from django.core.cache import cache
 from django.utils.encoding import smart_str
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import generics, status
@@ -15,8 +16,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from accounts.models import Profile
 from accounts.tasks import send_reset_password_email_task, send_verification_email_task
 from blog.api.v1.serializers import FavoritePostSerializer
-from .paginations import ProfileFavoritePostPagination
 
+from ...services import create_user, update_profile
+from ...utils import activate_user
+from .paginations import ProfileFavoritePostPagination
 from .serializers import (
     ChangePasswordSerializer,
     CreateJwtTokenSerializer,
@@ -27,9 +30,6 @@ from .serializers import (
     RegisterUserSerializer,
     ResendActivationLinkSerializer,
 )
-from ...services import create_user, update_profile
-
-from ...utils import activate_user
 
 User = get_user_model()
 
@@ -212,12 +212,15 @@ class ProfileAPIView(generics.RetrieveUpdateAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         profile = self.get_object()
-        favorite_post = profile.favoritepost.all()
+        favorite_post = cache.get(f"profile_{profile.id}_favorite_post")
+        if not favorite_post:
+            favorite_post = profile.favoritepost.all()
+            cache.set(f"profile_{profile.id}_favorite_post", favorite_post, timeout=300)
         paginator = ProfileFavoritePostPagination()
         page_obj = paginator.paginate_queryset(favorite_post, request=self.request)
         serializer = ProfileSerializer(profile, context={"request": request})
         data = serializer.data
-        print(data)
+
         data["favoritepost"] = FavoritePostSerializer(
             page_obj, many=True, context={"request": request}
         ).data
@@ -227,20 +230,17 @@ class ProfileAPIView(generics.RetrieveUpdateAPIView):
         instance = self.get_object()
 
         serializer = self.get_serializer(
-            instance=instance, data=request.data, partial=True
+            instance=instance,
+            data=request.data,
+            partial=True,
         )
         serializer.is_valid(raise_exception=True)
-        print(serializer.data)
         validated_data = serializer.validated_data
-        user = validated_data.pop("user")
 
         try:
             profile = update_profile(
                 instance=instance,
-                user=user,
-                bio=validated_data["bio"],
-                image=validated_data["image"],
-                birth_date=validated_data["birth_date"],
+                validated_data=validated_data,
             )
         except Exception as e:
             return Response(
@@ -248,7 +248,7 @@ class ProfileAPIView(generics.RetrieveUpdateAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        serializer = ProfileSerializer(profile)
+        serializer = ProfileSerializer(profile, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

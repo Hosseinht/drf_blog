@@ -118,6 +118,7 @@ class SimplePostSerializer(serializers.ModelSerializer):
             "likes",
             "absolute_url",
         ]
+        read_only_fields = ["absolute_url"]
 
 
 class FavoritePostSerializer(serializers.ModelSerializer):

@@ -15,7 +15,7 @@ class TestLikes:
         self, api_client, media_root, create_post
     ):
 
-        response = api_client.post(f"{post_url}{create_post.slug}/likes/")
+        response = api_client.post(f"{post_url}{create_post.slug}/like/")
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -25,7 +25,7 @@ class TestLikes:
 
         api_client.force_authenticate(user=user)
 
-        response = api_client.post(f"{post_url}{post.slug}/likes/")
+        response = api_client.post(f"{post_url}{post.slug}/like/")
 
         assert response.status_code == status.HTTP_200_OK
         assert Like.objects.filter(like_user=user, like_post=post).exists()
@@ -40,7 +40,7 @@ class TestLikes:
 
         api_client.force_authenticate(user=user)
 
-        response = api_client.post(f"{post_url}{post.slug}/likes/")
+        response = api_client.post(f"{post_url}{post.slug}/like/")
 
         assert response.status_code == status.HTTP_200_OK
         assert not Like.objects.filter(like_user=user, like_post=post).exists()
